@@ -1,0 +1,269 @@
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: linear-gradient(135deg, #0f172a, #1e293b);
+  color: #e2e8f0;
+  min-height: 100vh;
+}
+
+.app-shell {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 32px 18px 48px;
+}
+
+.hero-card,
+.panel-card,
+.output-card {
+  background: rgba(15, 23, 42, 0.8);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  border-radius: 20px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
+  backdrop-filter: blur(12px);
+}
+
+.hero-card {
+  padding: 24px;
+  margin-bottom: 16px;
+}
+
+.badge {
+  display: inline-block;
+  background: #22c55e;
+  color: #052e16;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: bold;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+h1 {
+  margin: 10px 0 6px;
+  font-size: 32px;
+}
+
+.hero-card p {
+  margin: 0;
+  color: #cbd5e1;
+}
+
+.panel-card {
+  padding: 20px;
+  margin-bottom: 16px;
+}
+
+.field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.field-group label {
+  font-size: 13px;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+textarea,
+input,
+select {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 12px 14px;
+  border: 1px solid #334155;
+  border-radius: 12px;
+  background: #111827;
+  color: #f8fafc;
+}
+
+textarea {
+  min-height: 96px;
+  resize: vertical;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+button {
+  width: 100%;
+  padding: 12px 16px;
+  border: none;
+  border-radius: 12px;
+  background: linear-gradient(90deg, #8b5cf6, #3b82f6);
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+  margin-top: 6px;
+}
+
+button:disabled {
+  opacity: 0.7;
+  cursor: wait;
+}
+
+.hint {
+  color: #94a3b8;
+  font-size: 13px;
+  margin-top: 10px;
+}
+
+.output-card {
+  padding: 20px;
+}
+
+.output-placeholder {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #94a3b8;
+}
+
+.pulse-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #22c55e;
+  animation: pulse 1.2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.3); opacity: 0.6; }
+}
+
+.loading-card {
+  padding: 18px;
+  border-radius: 16px;
+  background: rgba(30, 41, 59, 0.85);
+  border: 1px solid rgba(96, 165, 250, 0.2);
+}
+
+.loader {
+  width: 34px;
+  height: 34px;
+  border: 3px solid rgba(255,255,255,0.2);
+  border-top-color: #60a5fa;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin-bottom: 12px;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.ai-response {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.response-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+}
+
+.mini-badge {
+  display: inline-block;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #60a5fa;
+  margin-bottom: 4px;
+}
+
+.status-pill {
+  background: rgba(34, 197, 94, 0.15);
+  color: #86efac;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+}
+
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.summary-card,
+.recipe-card,
+.insight-card,
+.todo-card {
+  background: rgba(30, 41, 59, 0.9);
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  border-radius: 14px;
+  padding: 12px;
+}
+
+.summary-card strong,
+.recipe-card strong {
+  display: block;
+  margin-bottom: 4px;
+  color: #f8fafc;
+}
+
+.summary-card span,
+.recipe-card p {
+  color: #cbd5e1;
+  font-size: 14px;
+}
+
+.recipe-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.recipe-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+}
+
+.recipe-meta {
+  background: rgba(59, 130, 246, 0.16);
+  color: #bfdbfe;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.insight-card.success {
+  border-color: rgba(34, 197, 94, 0.35);
+  background: rgba(22, 101, 52, 0.2);
+}
+
+.insight-card.warning {
+  border-color: rgba(248, 113, 113, 0.35);
+  background: rgba(127, 29, 29, 0.2);
+}
+
+.todo-card ul {
+  margin: 8px 0 0 18px;
+  color: #cbd5e1;
+}
+
+@media (max-width: 640px) {
+  .row,
+  .summary-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .recipe-card,
+  .response-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}

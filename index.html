@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Cooking Planner</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="app-shell">
+    <div class="hero-card">
+      <div class="badge">AI Micro-App</div>
+      <h1>🤖 Kitchen Copilot</h1>
+      <p>Describe your pantry and get a smart, budget-aware cooking plan in seconds.</p>
+    </div>
+
+    <div class="panel-card">
+      <div class="field-group">
+        <label for="ingredients">Ingredients</label>
+        <textarea id="ingredients" placeholder="rice, eggs, onion, tomato"></textarea>
+      </div>
+
+      <div class="row">
+        <div class="field-group small">
+          <label for="budget">Budget</label>
+          <input id="budget" type="number" min="0" value="100" placeholder="Budget (₹)">
+        </div>
+
+        <div class="field-group small">
+          <label for="diet">Diet</label>
+          <select id="diet">
+            <option>Any</option>
+            <option>Vegetarian</option>
+            <option>Vegan</option>
+          </select>
+        </div>
+      </div>
+
+      <button onclick="generatePlan()">✨ Generate AI Plan</button>
+      <div class="hint">The assistant adapts recipes to your budget and preferences.</div>
+    </div>
+
+    <div id="output" class="output-card">
+      <div class="output-placeholder">
+        <div class="pulse-dot"></div>
+        <span>Your AI-generated response will appear here.</span>
+      </div>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
