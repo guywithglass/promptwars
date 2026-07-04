@@ -215,13 +215,17 @@ function selectMealRecipes({ ingredients, budget, diet, focusCategory }) {
       candidates = pool;
     }
 
-    const scored = candidates.map(recipe => ({ recipe, score: scoreRecipe(recipe, ingredients, budget, slot) }));
-    const top = scored.sort((a, b) => b.score - a.score).slice(0, 3);
-    const weights = [0.5, 0.3, 0.2];
+    const scored = candidates.map(recipe => ({
+      recipe,
+      score: scoreRecipe(recipe, ingredients, budget, slot) + Math.random() * 6
+    }));
+    const ranked = scored.sort((a, b) => b.score - a.score);
+    const top = ranked.slice(0, Math.min(5, ranked.length));
+    const weights = [0.4, 0.25, 0.15, 0.12, 0.08].slice(0, top.length);
     const rand = Math.random();
     let cumulative = 0;
     const best = top.find((_, i) => {
-      cumulative += weights[i];
+      cumulative += weights[i] || 0;
       return rand <= cumulative;
     }) || top[0];
 
@@ -453,32 +457,37 @@ function generatePlan() {
   renderLoading();
 
   setTimeout(() => {
-    const selectedMeals = selectMealRecipes({ ingredients, budget, diet, focusCategory: mealType });
-    const totalCost = selectedMeals.reduce((sum, meal) => sum + meal.cost, 0);
-    const planData = buildPlanData({ ingredients, budget, diet, mealType, selectedMeals, totalCost, mode });
+    try {
+      const selectedMeals = selectMealRecipes({ ingredients, budget, diet, focusCategory: mealType });
+      const totalCost = selectedMeals.reduce((sum, meal) => sum + meal.cost, 0);
+      const planData = buildPlanData({ ingredients, budget, diet, mealType, selectedMeals, totalCost, mode });
 
-    renderPlan(planData);
-    saveLastPlan(planData);
+      renderPlan(planData);
+      saveLastPlan(planData);
 
-    const shareLink = generateShareLink(planData);
-    const output = document.getElementById("output");
-    output.insertAdjacentHTML("beforeend", `<div class="todo-card"><strong>🔗 Shareable plan</strong><p>${shareLink}</p></div>`);
-
-    setButtonsLoading(false);
-    stopLoading();
+      const shareLink = generateShareLink(planData);
+      const output = document.getElementById("output");
+      output.insertAdjacentHTML("beforeend", `<div class="todo-card"><strong>🔗 Shareable plan</strong><p>${shareLink}</p></div>`);
+    } finally {
+      setButtonsLoading(false);
+      stopLoading();
+    }
   }, 900);
 }
 
 function surpriseMe() {
-  const surprisePool = recipes.filter(recipe => recipe.category === "Breakfast");
-  const breakfast = surprisePool[Math.floor(Math.random() * surprisePool.length)];
-  const lunch = recipes.filter(recipe => recipe.category === "Lunch")[Math.floor(Math.random() * 3)];
-  const dinner = recipes.filter(recipe => recipe.category === "Dinner")[Math.floor(Math.random() * 4)];
-  const surpriseIngredients = [...new Set([...breakfast.ingredients, ...lunch.ingredients, ...dinner.ingredients])];
+  const breakfastPool = recipes.filter(recipe => recipe.category === "Breakfast");
+  const lunchPool = recipes.filter(recipe => recipe.category === "Lunch");
+  const dinnerPool = recipes.filter(recipe => recipe.category === "Dinner");
+
+  const breakfast = breakfastPool[Math.floor(Math.random() * breakfastPool.length)];
+  const lunch = lunchPool[Math.floor(Math.random() * lunchPool.length)];
+  const dinner = dinnerPool[Math.floor(Math.random() * dinnerPool.length)];
+  const surpriseIngredients = [...new Set([...breakfast.ingredients, ...lunch.ingredients, ...dinner.ingredients, "spice", "oil"])];
 
   document.getElementById("ingredients").value = surpriseIngredients.join(", ");
-  document.getElementById("budget").value = breakfast.cost + lunch.cost + dinner.cost + 20;
-  document.getElementById("diet").value = "Any";
+  document.getElementById("budget").value = breakfast.cost + lunch.cost + dinner.cost + 20 + Math.floor(Math.random() * 25);
+  document.getElementById("diet").value = Math.random() > 0.5 ? "Any" : "Vegetarian";
   document.getElementById("mealType").value = "Any";
   generatePlan();
 }
