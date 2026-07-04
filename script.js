@@ -108,6 +108,33 @@ const substitutes = {
   pasta: "rice noodles"
 };
 
+const calorieMap = {
+  eggs: 70,
+  rice: 130,
+  bread: 80,
+  chicken: 150,
+  tofu: 90,
+  banana: 100,
+  oats: 120,
+  milk: 60,
+  "peanut butter": 95,
+  chickpeas: 135,
+  hummus: 70,
+  cucumber: 15,
+  tomato: 20,
+  onion: 40,
+  spinach: 23,
+  noodles: 200,
+  carrot: 41,
+  peas: 81,
+  pasta: 158,
+  garlic: 5,
+  lentils: 116,
+  avocado: 160,
+  "sweet potato": 90,
+  paneer: 120
+};
+
 let typingInterval = null;
 
 function renderLoading() {
@@ -188,18 +215,26 @@ function selectMealRecipes({ ingredients, budget, diet, focusCategory }) {
       candidates = pool;
     }
 
-    candidates.sort((a, b) => scoreRecipe(b, ingredients, budget, slot) - scoreRecipe(a, ingredients, budget, slot));
-    const best = candidates[0];
+    const scored = candidates.map(recipe => ({ recipe, score: scoreRecipe(recipe, ingredients, budget, slot) }));
+    const top = scored.sort((a, b) => b.score - a.score).slice(0, 3);
+    const weights = [0.5, 0.3, 0.2];
+    const rand = Math.random();
+    let cumulative = 0;
+    const best = top.find((_, i) => {
+      cumulative += weights[i];
+      return rand <= cumulative;
+    }) || top[0];
+
     if (best) {
-      selected.push(best);
-      usedNames.add(best.name);
+      selected.push(best.recipe);
+      usedNames.add(best.recipe.name);
     }
   });
 
   return selected;
 }
 
-function buildPlanData({ ingredients, budget, diet, mealType, selectedMeals, totalCost }) {
+function buildPlanData({ ingredients, budget, diet, mealType, selectedMeals, totalCost, mode }) {
   const pantrySet = new Set(ingredients);
   const groceryList = [...new Set(selectedMeals.flatMap(meal => meal.ingredients).filter(item => !pantrySet.has(item)))].sort();
   const substitutions = groceryList
@@ -208,6 +243,15 @@ function buildPlanData({ ingredients, budget, diet, mealType, selectedMeals, tot
 
   const confidence = Math.min(95, 58 + selectedMeals.length * 8 + (totalCost <= budget ? 8 : 0) + (diet !== "Any" ? 4 : 0));
   const suggestions = [];
+  let modeHint = "Focus on taste, creativity, and variety.";
+
+  if (mode === "fitness") {
+    modeHint = "Focus on high-protein, low-fat meals.";
+  } else if (mode === "budget") {
+    modeHint = "Focus on the cheapest possible combinations.";
+  }
+
+  suggestions.push(modeHint);
 
   if (ingredients.includes("eggs")) suggestions.push("Egg-based meals are a strong fit for your pantry.");
   if (ingredients.includes("rice") || ingredients.includes("noodles")) suggestions.push("Carb-forward meals will feel satisfying and filling.");
@@ -236,6 +280,10 @@ function buildPlanData({ ingredients, budget, diet, mealType, selectedMeals, tot
     </div>
   `).join("");
 
+  const totalCalories = selectedMeals.reduce((sum, meal) => {
+    return sum + meal.ingredients.reduce((innerSum, item) => innerSum + (calorieMap[item] || 50), 0);
+  }, 0);
+
   return {
     ingredients,
     budget,
@@ -250,7 +298,8 @@ function buildPlanData({ ingredients, budget, diet, mealType, selectedMeals, tot
     dietMessage,
     groceryList,
     substitutions,
-    mealCards
+    mealCards,
+    totalCalories
   };
 }
 
@@ -275,9 +324,15 @@ function renderPlan(planData) {
           <span>₹${planData.budget || 0}</span>
         </div>
         <div class="summary-card">
-          <strong>Diet</strong>
-          <span>${planData.diet}</span>
+          <strong>Calories</strong>
+          <span>${planData.totalCalories || 0} kcal</span>
         </div>
+      </div>
+
+      <div class="timeline">
+        <div>🕘 Breakfast - 9:00 AM</div>
+        <div>🕑 Lunch - 2:00 PM</div>
+        <div>🕗 Dinner - 8:00 PM</div>
       </div>
 
       <div class="meal-grid">
@@ -287,14 +342,14 @@ function renderPlan(planData) {
       <div class="grocery-card">
         <strong>🛒 Grocery list</strong>
         <div class="grocery-list">
-          ${planData.groceryList.length ? planData.groceryList.map(item => `<span class="grocery-pill">${item}</span>`).join("") : "<span class="grocery-pill">No extra items needed</span>"}
+          ${planData.groceryList.length ? planData.groceryList.map(item => `<span class="grocery-pill">${item}</span>`).join("") : '<span class="grocery-pill">No extra items needed</span>'}
         </div>
       </div>
 
       <div class="swap-card">
         <strong>🔁 Smart substitutions</strong>
         <div class="swap-list">
-          ${planData.substitutions.length ? planData.substitutions.map(item => `<span class="swap-pill">${item}</span>`).join("") : "<span class="swap-pill">No swaps needed</span>"}
+          ${planData.substitutions.length ? planData.substitutions.map(item => `<span class="swap-pill">${item}</span>`).join("") : '<span class="swap-pill">No swaps needed</span>'}
         </div>
       </div>
 
@@ -325,11 +380,33 @@ function renderPlan(planData) {
   `;
 }
 
+function generateShareLink(planData) {
+  const encoded = btoa(JSON.stringify(planData));
+  return `${window.location.href.split("?")[0]}?plan=${encoded}`;
+}
+
 function saveLastPlan(planData) {
   localStorage.setItem("kitchenCopilotLastPlan", JSON.stringify(planData));
 }
 
 function restoreLastPlan() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const plan = urlParams.get("plan");
+
+  if (plan) {
+    try {
+      const decoded = JSON.parse(atob(plan));
+      document.getElementById("ingredients").value = (decoded.ingredients || []).join(", ");
+      document.getElementById("budget").value = decoded.budget || 180;
+      document.getElementById("diet").value = decoded.diet || "Any";
+      document.getElementById("mealType").value = decoded.mealType || "Any";
+      renderPlan(decoded);
+      return;
+    } catch (error) {
+      console.warn("Unable to restore shared plan", error);
+    }
+  }
+
   const saved = localStorage.getItem("kitchenCopilotLastPlan");
   if (!saved) return;
 
@@ -355,6 +432,7 @@ function generatePlan() {
   const budget = parseInt(document.getElementById("budget").value) || 0;
   const diet = document.getElementById("diet").value;
   const mealType = document.getElementById("mealType").value;
+  const mode = document.getElementById("mode").value;
 
   generateBtn.disabled = true;
   surpriseBtn.disabled = true;
@@ -365,10 +443,14 @@ function generatePlan() {
   setTimeout(() => {
     const selectedMeals = selectMealRecipes({ ingredients, budget, diet, focusCategory: mealType });
     const totalCost = selectedMeals.reduce((sum, meal) => sum + meal.cost, 0);
-    const planData = buildPlanData({ ingredients, budget, diet, mealType, selectedMeals, totalCost });
+    const planData = buildPlanData({ ingredients, budget, diet, mealType, selectedMeals, totalCost, mode });
 
     renderPlan(planData);
     saveLastPlan(planData);
+
+    const shareLink = generateShareLink(planData);
+    const output = document.getElementById("output");
+    output.insertAdjacentHTML("beforeend", `<div class="todo-card"><strong>🔗 Shareable plan</strong><p>${shareLink}</p></div>`);
 
     generateBtn.disabled = false;
     surpriseBtn.disabled = false;
