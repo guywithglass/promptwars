@@ -1,46 +1,99 @@
-// Recipe database (fake AI brain)
 const recipes = [
   {
-    name: "Veggie Rice",
-    ingredients: ["rice", "onion", "tomato"],
-    cost: 40,
-    category: "Lunch",
-    variations: ["Smoky", "Crispy", "Herby"]
-  },
-  {
-    name: "Egg Toast",
-    ingredients: ["eggs", "bread"],
-    cost: 30,
+    name: "Crispy Veggie Omelet",
+    ingredients: ["eggs", "onion", "tomato", "spinach"],
+    cost: 38,
     category: "Breakfast",
-    variations: ["Golden", "Wholesome", "Quick"]
+    dietary: "Vegetarian",
+    variations: ["Golden", "Protein-rich", "Morning-ready"]
   },
   {
-    name: "Vegetable Salad",
-    ingredients: ["cucumber", "tomato", "onion"],
-    cost: 25,
+    name: "Banana Oats Bowl",
+    ingredients: ["oats", "banana", "milk"],
+    cost: 24,
+    category: "Breakfast",
+    dietary: "Vegetarian",
+    variations: ["Creamy", "Cozy", "Quick"]
+  },
+  {
+    name: "Peanut Butter Toast",
+    ingredients: ["bread", "peanut butter", "banana"],
+    cost: 26,
+    category: "Breakfast",
+    dietary: "Vegetarian",
+    variations: ["Crunchy", "Sweet", "Fast"]
+  },
+  {
+    name: "Chickpea Rice Bowl",
+    ingredients: ["rice", "chickpeas", "tomato", "onion"],
+    cost: 42,
     category: "Lunch",
-    variations: ["Fresh", "Crunchy", "Zesty"]
+    dietary: "Vegan",
+    variations: ["Comforting", "Bright", "Filling"]
   },
   {
-    name: "Fried Rice",
-    ingredients: ["rice", "carrot", "peas", "onion"],
+    name: "Hummus Wrap",
+    ingredients: ["bread", "hummus", "cucumber", "tomato"],
+    cost: 35,
+    category: "Lunch",
+    dietary: "Vegan",
+    variations: ["Fresh", "Portable", "Crunchy"]
+  },
+  {
+    name: "Garden Salad Bowl",
+    ingredients: ["cucumber", "tomato", "onion", "spinach"],
+    cost: 28,
+    category: "Lunch",
+    dietary: "Vegan",
+    variations: ["Cool", "Light", "Mediterranean"]
+  },
+  {
+    name: "Spicy Noodle Stir-Fry",
+    ingredients: ["noodles", "carrot", "onion", "peas"],
+    cost: 48,
+    category: "Dinner",
+    dietary: "Vegan",
+    variations: ["Bold", "Fast", "Weeknight"]
+  },
+  {
+    name: "Tomato Pasta",
+    ingredients: ["pasta", "tomato", "onion", "garlic"],
+    cost: 46,
+    category: "Dinner",
+    dietary: "Vegetarian",
+    variations: ["Silky", "Classic", "Cozy"]
+  },
+  {
+    name: "Tofu Curry",
+    ingredients: ["tofu", "tomato", "onion", "rice"],
+    cost: 54,
+    category: "Dinner",
+    dietary: "Vegan",
+    variations: ["Rich", "Comforting", "Balanced"]
+  },
+  {
+    name: "Paneer Quesadilla",
+    ingredients: ["paneer", "bread", "onion", "tomato"],
     cost: 50,
     category: "Dinner",
-    variations: ["Spicy", "Comforting", "Fast"]
+    dietary: "Vegetarian",
+    variations: ["Crispy", "Cheesy", "Snackable"]
   },
   {
-    name: "Pancake Stack",
-    ingredients: ["eggs", "milk", "flour"],
-    cost: 35,
+    name: "Sweet Potato Toast",
+    ingredients: ["sweet potato", "avocado", "tomato"],
+    cost: 34,
     category: "Breakfast",
-    variations: ["Fluffy", "Sweet", "Weekend"]
+    dietary: "Vegan",
+    variations: ["Bright", "Wholesome", "Trendy"]
   },
   {
-    name: "Chickpea Bowl",
-    ingredients: ["chickpeas", "tomato", "onion"],
-    cost: 45,
-    category: "Dinner",
-    variations: ["Bold", "Cozy", "Protein-rich"]
+    name: "Lentil Soup Bowl",
+    ingredients: ["lentils", "onion", "tomato", "carrot"],
+    cost: 40,
+    category: "Lunch",
+    dietary: "Vegan",
+    variations: ["Warm", "Hearty", "Comforting"]
   }
 ];
 
@@ -48,7 +101,11 @@ const substitutes = {
   eggs: "paneer",
   milk: "soy milk",
   bread: "roti",
-  rice: "quinoa"
+  rice: "quinoa",
+  noodles: "rice noodles",
+  chickpeas: "beans",
+  tofu: "paneer",
+  pasta: "rice noodles"
 };
 
 let typingInterval = null;
@@ -57,8 +114,8 @@ function renderLoading() {
   document.getElementById("output").innerHTML = `
     <div class="loading-card">
       <div class="loader"></div>
-      <h3>Analyzing your pantry...</h3>
-      <p>Matching recipes, checking budget, and shaping a smart plan.</p>
+      <h3>Planning your day...</h3>
+      <p>Matching meals, building your grocery list, and checking the budget.</p>
       <p id="typing-line" class="hint"></p>
     </div>
   `;
@@ -66,7 +123,7 @@ function renderLoading() {
   const line = document.getElementById("typing-line");
   const phrases = [
     "Scanning ingredients for the best fit...",
-    "Tweaking suggestions for your budget...",
+    "Balancing flavor, cost, and timing...",
     "Adding a confident AI-style recommendation..."
   ];
   let phraseIndex = 0;
@@ -88,64 +145,112 @@ function stopLoading() {
   clearInterval(typingInterval);
 }
 
-function buildPlanData({ ingredients, budget, diet, mealType, matchedRecipes, totalCost }) {
-  const confidence = Math.min(95, 55 + matchedRecipes.length * 12 + (totalCost <= budget ? 8 : 0) + (diet !== "Any" ? 5 : 0));
+function getDietFilteredRecipes(diet) {
+  if (diet === "Vegetarian") {
+    return recipes.filter(recipe => recipe.dietary !== "Vegan" || recipe.dietary === "Vegetarian");
+  }
+  if (diet === "Vegan") {
+    return recipes.filter(recipe => recipe.dietary === "Vegan");
+  }
+  return recipes;
+}
+
+function scoreRecipe(recipe, ingredients, budget, category) {
+  let score = 0;
+  const pantrySet = new Set(ingredients);
+  const overlap = recipe.ingredients.filter(item => pantrySet.has(item)).length;
+  score += overlap * 10;
+
+  if (recipe.category === category) score += 8;
+  if (recipe.cost <= budget / 3) score += 4;
+  if (recipe.cost <= budget / 2) score += 2;
+
+  return score;
+}
+
+function selectMealRecipes({ ingredients, budget, diet, focusCategory }) {
+  const filteredRecipes = getDietFilteredRecipes(diet);
+  const mealSlots = ["Breakfast", "Lunch", "Dinner"];
+  const selected = [];
+  const usedNames = new Set();
+
+  mealSlots.forEach(slot => {
+    const pool = filteredRecipes.filter(recipe => recipe.category === slot);
+    let candidates = pool.filter(recipe => recipe.ingredients.some(item => ingredients.includes(item)) || focusCategory === "Any");
+
+    if (candidates.length === 0) {
+      candidates = pool;
+    }
+
+    candidates = candidates.filter(recipe => !usedNames.has(recipe.name));
+
+    if (candidates.length === 0) {
+      candidates = pool;
+    }
+
+    candidates.sort((a, b) => scoreRecipe(b, ingredients, budget, slot) - scoreRecipe(a, ingredients, budget, slot));
+    const best = candidates[0];
+    if (best) {
+      selected.push(best);
+      usedNames.add(best.name);
+    }
+  });
+
+  return selected;
+}
+
+function buildPlanData({ ingredients, budget, diet, mealType, selectedMeals, totalCost }) {
+  const pantrySet = new Set(ingredients);
+  const groceryList = [...new Set(selectedMeals.flatMap(meal => meal.ingredients).filter(item => !pantrySet.has(item)))].sort();
+  const substitutions = groceryList
+    .filter(item => substitutes[item])
+    .map(item => `${item} → ${substitutes[item]}`);
+
+  const confidence = Math.min(95, 58 + selectedMeals.length * 8 + (totalCost <= budget ? 8 : 0) + (diet !== "Any" ? 4 : 0));
   const suggestions = [];
 
-  if (ingredients.includes("eggs")) suggestions.push("A quick egg-based option looks strong.");
-  if (ingredients.includes("rice")) suggestions.push("Rice-based meals will feel extra filling.");
-  if (budget < 40) suggestions.push("Budget-friendly staples are the best fit.");
-  if (diet === "Vegan") suggestions.push("Plant-based swaps keep this plan flexible.");
-  if (suggestions.length === 0) suggestions.push("A balanced mix of pantry staples should work well.");
+  if (ingredients.includes("eggs")) suggestions.push("Egg-based meals are a strong fit for your pantry.");
+  if (ingredients.includes("rice") || ingredients.includes("noodles")) suggestions.push("Carb-forward meals will feel satisfying and filling.");
+  if (budget < 80) suggestions.push("Budget-friendly meals are the safest bet for today.");
+  if (diet === "Vegan") suggestions.push("Your plan leans plant-based and flexible.");
+  if (suggestions.length === 0) suggestions.push("A balanced day of meals should work well with what you have.");
 
   const budgetStatus = totalCost > budget ? "warning" : "success";
   const budgetMessage = totalCost > budget
-    ? `Your plan runs over budget. Try swaps like ${Object.entries(substitutes).slice(0, 2).map(([from, to]) => `${from} → ${to}`).join(", ")}.`
-    : `This plan stays within your budget and feels ready to cook.`;
+    ? `The day plan is ${totalCost - budget}₹ over budget. Swap a couple of items like ${substitutions.slice(0, 2).join(" and ") || "rice → quinoa"}.`
+    : `The full day plan fits your budget and stays practical to cook.`;
 
   const dietMessage = diet === "Vegan"
-    ? "The suggestions are tuned for a plant-based meal path."
+    ? "The plan is tuned for a plant-based path with simple swaps."
     : diet === "Vegetarian"
-      ? "The suggestions are tuned for vegetarian-friendly cooking."
-      : "The suggestions are flexible for any preference.";
+      ? "The plan is tuned for vegetarian-friendly meals."
+      : "The plan stays flexible for any preference.";
 
-  const recipeCards = matchedRecipes.length
-    ? matchedRecipes.map(recipe => {
-        const variation = recipe.variations[Math.floor(Math.random() * recipe.variations.length)];
-        return `
-          <div class="recipe-card">
-            <div>
-              <strong>${recipe.name}</strong>
-              <p>${recipe.ingredients.join(", ")}</p>
-              <span class="category-pill">${recipe.category}</span>
-              <div class="confidence">✨ ${variation} variation</div>
-            </div>
-            <div class="recipe-meta">₹${recipe.cost}</div>
-          </div>
-        `;
-      }).join("")
-    : `
-      <div class="recipe-card">
-        <div>
-          <strong>No strong match yet</strong>
-          <p>Try adding staples like rice, eggs, or onions.</p>
-        </div>
-      </div>
-    `;
+  const mealCards = selectedMeals.map(meal => `
+    <div class="meal-card">
+      <span class="meal-badge">${meal.category}</span>
+      <strong>${meal.name}</strong>
+      <p>${meal.ingredients.join(", ")}</p>
+      <div class="meal-meta">₹${meal.cost}</div>
+      <div class="confidence">✨ ${meal.variations[Math.floor(Math.random() * meal.variations.length)]} variation</div>
+    </div>
+  `).join("");
 
   return {
     ingredients,
     budget,
     diet,
     mealType,
-    matchedRecipes,
-    recipeCards,
+    selectedMeals,
     totalCost,
     confidence,
     suggestions,
     budgetStatus,
     budgetMessage,
-    dietMessage
+    dietMessage,
+    groceryList,
+    substitutions,
+    mealCards
   };
 }
 
@@ -155,7 +260,7 @@ function renderPlan(planData) {
       <div class="response-header">
         <div>
           <div class="mini-badge">AI response</div>
-          <h2>✨ Personalized cooking plan</h2>
+          <h2>✨ Daily cooking to-do plan</h2>
         </div>
         <div class="status-pill">Live</div>
       </div>
@@ -175,12 +280,26 @@ function renderPlan(planData) {
         </div>
       </div>
 
-      <div class="recipe-list">
-        ${planData.recipeCards}
+      <div class="meal-grid">
+        ${planData.mealCards}
+      </div>
+
+      <div class="grocery-card">
+        <strong>🛒 Grocery list</strong>
+        <div class="grocery-list">
+          ${planData.groceryList.length ? planData.groceryList.map(item => `<span class="grocery-pill">${item}</span>`).join("") : "<span class="grocery-pill">No extra items needed</span>"}
+        </div>
+      </div>
+
+      <div class="swap-card">
+        <strong>🔁 Smart substitutions</strong>
+        <div class="swap-list">
+          ${planData.substitutions.length ? planData.substitutions.map(item => `<span class="swap-pill">${item}</span>`).join("") : "<span class="swap-pill">No swaps needed</span>"}
+        </div>
       </div>
 
       <div class="insight-card ${planData.budgetStatus}">
-        <strong>Budget insight</strong>
+        <strong>Budget feasibility</strong>
         <p>${planData.budgetMessage}</p>
         <p>${planData.dietMessage}</p>
       </div>
@@ -194,11 +313,12 @@ function renderPlan(planData) {
       </div>
 
       <div class="todo-card">
-        <strong>Next steps</strong>
+        <strong>Cooking to-do list</strong>
         <ul>
-          <li>Check ingredients and prep surfaces</li>
-          <li>Start with the highest-match recipe</li>
-          <li>Save leftovers for the next meal</li>
+          <li>Check the grocery list and pantry items</li>
+          <li>Prep breakfast first if it is the fastest meal</li>
+          <li>Cook lunch and dinner with leftovers in mind</li>
+          <li>Save any unused ingredients for tomorrow</li>
         </ul>
       </div>
     </div>
@@ -215,9 +335,9 @@ function restoreLastPlan() {
 
   try {
     const parsed = JSON.parse(saved);
-    document.getElementById("ingredients").value = parsed.ingredients.join(", ");
-    document.getElementById("budget").value = parsed.budget;
-    document.getElementById("diet").value = parsed.diet;
+    document.getElementById("ingredients").value = (parsed.ingredients || []).join(", ");
+    document.getElementById("budget").value = parsed.budget || 180;
+    document.getElementById("diet").value = parsed.diet || "Any";
     document.getElementById("mealType").value = parsed.mealType || "Any";
     renderPlan(parsed);
   } catch (error) {
@@ -243,24 +363,9 @@ function generatePlan() {
   renderLoading();
 
   setTimeout(() => {
-    let matchedRecipes = recipes.filter(recipe =>
-      recipe.ingredients.some(ingredient => ingredients.includes(ingredient))
-    );
-
-    if (mealType !== "Any") {
-      matchedRecipes = matchedRecipes.filter(recipe => recipe.category === mealType);
-    }
-
-    if (diet === "Vegetarian") {
-      matchedRecipes = matchedRecipes.filter(recipe => recipe.name !== "Egg Toast");
-    }
-
-    if (diet === "Vegan") {
-      matchedRecipes = matchedRecipes.filter(recipe => !["Egg Toast", "Pancake Stack"].includes(recipe.name));
-    }
-
-    const totalCost = matchedRecipes.reduce((sum, recipe) => sum + recipe.cost, 0);
-    const planData = buildPlanData({ ingredients, budget, diet, mealType, matchedRecipes, totalCost });
+    const selectedMeals = selectMealRecipes({ ingredients, budget, diet, focusCategory: mealType });
+    const totalCost = selectedMeals.reduce((sum, meal) => sum + meal.cost, 0);
+    const planData = buildPlanData({ ingredients, budget, diet, mealType, selectedMeals, totalCost });
 
     renderPlan(planData);
     saveLastPlan(planData);
@@ -274,11 +379,16 @@ function generatePlan() {
 }
 
 function surpriseMe() {
-  const randomRecipe = recipes[Math.floor(Math.random() * recipes.length)];
-  document.getElementById("ingredients").value = randomRecipe.ingredients.join(", ");
-  document.getElementById("budget").value = randomRecipe.cost + 20;
+  const surprisePool = recipes.filter(recipe => recipe.category === "Breakfast");
+  const breakfast = surprisePool[Math.floor(Math.random() * surprisePool.length)];
+  const lunch = recipes.filter(recipe => recipe.category === "Lunch")[Math.floor(Math.random() * 3)];
+  const dinner = recipes.filter(recipe => recipe.category === "Dinner")[Math.floor(Math.random() * 4)];
+  const surpriseIngredients = [...new Set([...breakfast.ingredients, ...lunch.ingredients, ...dinner.ingredients])];
+
+  document.getElementById("ingredients").value = surpriseIngredients.join(", ");
+  document.getElementById("budget").value = breakfast.cost + lunch.cost + dinner.cost + 20;
   document.getElementById("diet").value = "Any";
-  document.getElementById("mealType").value = randomRecipe.category;
+  document.getElementById("mealType").value = "Any";
   generatePlan();
 }
 

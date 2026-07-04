@@ -11,19 +11,19 @@
     <div class="hero-card">
       <div class="badge">AI Micro-App</div>
       <h1>🤖 Kitchen Copilot</h1>
-      <p>Describe your pantry and get a smart, budget-aware cooking plan in seconds.</p>
+      <p>Turn your pantry and budget into a full-day cooking to-do plan with breakfast, lunch, dinner, grocery swaps, and smart timing.</p>
     </div>
 
     <div class="panel-card">
       <div class="field-group">
-        <label for="ingredients">Ingredients</label>
+        <label for="ingredients">Ingredients on hand</label>
         <textarea id="ingredients" placeholder="rice, eggs, onion, tomato"></textarea>
       </div>
 
       <div class="row">
         <div class="field-group small">
           <label for="budget">Budget</label>
-          <input id="budget" type="number" min="0" value="100" placeholder="Budget (₹)">
+          <input id="budget" type="number" min="0" value="180" placeholder="Budget (₹)">
         </div>
 
         <div class="field-group small">
@@ -38,7 +38,7 @@
 
       <div class="row">
         <div class="field-group small">
-          <label for="mealType">Meal Type</label>
+          <label for="mealType">Main focus</label>
           <select id="mealType">
             <option>Any</option>
             <option>Breakfast</option>
@@ -52,13 +52,13 @@
         <button id="generate-btn" type="button" onclick="generatePlan()">✨ Generate AI Plan</button>
         <button id="surprise-btn" type="button" class="secondary" onclick="surpriseMe()">🎲 Surprise Me</button>
       </div>
-      <div class="hint">The assistant adapts recipes to your budget, preferences, and mood.</div>
+      <div class="hint">The assistant adapts recipes, swaps, and shopping needs to your day.</div>
     </div>
 
     <div id="output" class="output-card">
       <div class="output-placeholder">
         <div class="pulse-dot"></div>
-        <span>Your AI-generated response will appear here.</span>
+        <span>Your AI-generated daily plan will appear here.</span>
       </div>
     </div>
   </div>
