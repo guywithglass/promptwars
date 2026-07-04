@@ -137,6 +137,24 @@ const calorieMap = {
 
 let typingInterval = null;
 
+function sanitizeIngredients(input) {
+  return input
+    .toLowerCase()
+    .split(",")
+    .map(value => value.trim())
+    .filter(Boolean);
+}
+
+function getPlanState() {
+  return {
+    ingredients: sanitizeIngredients(document.getElementById("ingredients").value),
+    budget: parseInt(document.getElementById("budget").value, 10) || 0,
+    diet: document.getElementById("diet").value,
+    mealType: document.getElementById("mealType").value,
+    mode: document.getElementById("mode").value
+  };
+}
+
 function renderLoading() {
   document.getElementById("output").innerHTML = `
     <div class="loading-card">
@@ -444,14 +462,8 @@ function setButtonsLoading(isLoading) {
 }
 
 function generatePlan() {
-  const ingredientsInput = document.getElementById("ingredients").value.toLowerCase().trim();
-  const ingredients = ingredientsInput
-    ? ingredientsInput.split(",").map(value => value.trim()).filter(Boolean)
-    : [];
-  const budget = parseInt(document.getElementById("budget").value) || 0;
-  const diet = document.getElementById("diet").value;
-  const mealType = document.getElementById("mealType").value;
-  const mode = document.getElementById("mode").value;
+  const state = getPlanState();
+  const { ingredients, budget, diet, mealType, mode } = state;
 
   setButtonsLoading(true);
   renderLoading();
@@ -492,4 +504,29 @@ function surpriseMe() {
   generatePlan();
 }
 
-document.addEventListener("DOMContentLoaded", restoreLastPlan);
+function attachHandlers() {
+  document.getElementById("generate-btn").addEventListener("click", generatePlan);
+  document.getElementById("surprise-btn").addEventListener("click", surpriseMe);
+}
+
+if (typeof document !== "undefined") {
+  document.addEventListener("DOMContentLoaded", () => {
+    attachHandlers();
+    restoreLastPlan();
+  });
+}
+
+if (typeof module !== "undefined") {
+  module.exports = {
+    recipes,
+    substitutes,
+    sanitizeIngredients,
+    getPlanState,
+    scoreRecipe,
+    selectMealRecipes,
+    buildPlanData,
+    generateShareLink,
+    saveLastPlan,
+    restoreLastPlan
+  };
+}
