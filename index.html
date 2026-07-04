@@ -36,8 +36,23 @@
         </div>
       </div>
 
-      <button onclick="generatePlan()">✨ Generate AI Plan</button>
-      <div class="hint">The assistant adapts recipes to your budget and preferences.</div>
+      <div class="row">
+        <div class="field-group small">
+          <label for="mealType">Meal Type</label>
+          <select id="mealType">
+            <option>Any</option>
+            <option>Breakfast</option>
+            <option>Lunch</option>
+            <option>Dinner</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button id="generate-btn" type="button" onclick="generatePlan()">✨ Generate AI Plan</button>
+        <button id="surprise-btn" type="button" class="secondary" onclick="surpriseMe()">🎲 Surprise Me</button>
+      </div>
+      <div class="hint">The assistant adapts recipes to your budget, preferences, and mood.</div>
     </div>
 
     <div id="output" class="output-card">
