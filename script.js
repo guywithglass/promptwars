@@ -197,7 +197,7 @@ function scoreRecipe(recipe, ingredients, budget, category) {
 
 function selectMealRecipes({ ingredients, budget, diet, focusCategory }) {
   const filteredRecipes = getDietFilteredRecipes(diet);
-  const mealSlots = ["Breakfast", "Lunch", "Dinner"];
+  const mealSlots = focusCategory === "Any" ? ["Breakfast", "Lunch", "Dinner"] : [focusCategory];
   const selected = [];
   const usedNames = new Set();
 
@@ -422,9 +422,24 @@ function restoreLastPlan() {
   }
 }
 
-function generatePlan() {
+function setButtonsLoading(isLoading) {
   const generateBtn = document.getElementById("generate-btn");
   const surpriseBtn = document.getElementById("surprise-btn");
+
+  if (isLoading) {
+    generateBtn.disabled = true;
+    surpriseBtn.disabled = true;
+    generateBtn.textContent = "⏳ Planning...";
+    surpriseBtn.textContent = "⏳ Planning...";
+  } else {
+    generateBtn.disabled = false;
+    surpriseBtn.disabled = false;
+    generateBtn.textContent = "✨ Generate AI Plan";
+    surpriseBtn.textContent = "🎲 Surprise Me";
+  }
+}
+
+function generatePlan() {
   const ingredientsInput = document.getElementById("ingredients").value.toLowerCase().trim();
   const ingredients = ingredientsInput
     ? ingredientsInput.split(",").map(value => value.trim()).filter(Boolean)
@@ -434,10 +449,7 @@ function generatePlan() {
   const mealType = document.getElementById("mealType").value;
   const mode = document.getElementById("mode").value;
 
-  generateBtn.disabled = true;
-  surpriseBtn.disabled = true;
-  generateBtn.textContent = "Thinking...";
-  surpriseBtn.textContent = "Thinking...";
+  setButtonsLoading(true);
   renderLoading();
 
   setTimeout(() => {
@@ -452,10 +464,7 @@ function generatePlan() {
     const output = document.getElementById("output");
     output.insertAdjacentHTML("beforeend", `<div class="todo-card"><strong>🔗 Shareable plan</strong><p>${shareLink}</p></div>`);
 
-    generateBtn.disabled = false;
-    surpriseBtn.disabled = false;
-    generateBtn.textContent = "✨ Generate AI Plan";
-    surpriseBtn.textContent = "🎲 Surprise Me";
+    setButtonsLoading(false);
     stopLoading();
   }, 900);
 }
